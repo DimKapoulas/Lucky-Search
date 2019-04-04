@@ -1,0 +1,44 @@
+#! /usr/bin/python3
+# lucky.py - Seaches a term in google seach and opes top results in tabs
+# Usage:     Run script. Enter search term as cmd argument.
+
+import sys, requests, webbrowser, bs4, logging
+logging.basicConfig(filename='luckyLog.txt', filemode='w', level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
+
+
+# not arguments given
+if  not len(sys.argv) > 1:
+    logging.debug('Into if clause for invalid search terms')
+    print("Please try again while providing a search term(s) as cmd argumets")
+    sys.exit()
+
+searchTerm = ' '.join(sys.argv[1:])    # make single string from search terms
+logging.debug('Joing the cmd args into a single string')
+print('Search DuckDuckGo....')   # display msg while downloading search results
+res = requests.get('https://google.com/search?q=' + searchTerm )
+try:
+    res.raise_for_status()
+    logging.debug('Response from site is OK')
+except Exception as exc:
+    logging.debug('Error 404, did not find')
+    print("Did not find anything. Got an error: %s" %(exc))
+    print('Try again with a different term')
+    sys.exit()
+
+# retrieve top search result links
+soup = bs4.BeautifulSoup(res.text, features='html.parser')
+soupHtml = open('soupHtml.txt', 'w')
+soupHtml.write(str(soup))
+logging.debug('Creating bs4 object')
+
+# open a  broswser  tab for each result
+linkElems = soup.select('.r a')
+logging.debug('LinkElements lenght is: %d' %(len(linkElems)))
+logging.debug('LinkElements are: ' + str(linkElems))
+logging.debug('Searching for specific element')
+numOpen = min(5, len(linkElems))
+
+logging.debug('Number of pages to open is: ' + str(numOpen))
+for i in range(numOpen):
+    logging.debug('Opening top result links')
+    webbrowser.open('https://google.com' + linkElems[i].get('href'))
